@@ -6,7 +6,9 @@ authors = ["Wojtek Jurkowlaniec <wojtek.jurkowlaniec@gmail.com>"]
 readme = "README.md"
 
 [tool.poetry.dependencies]
-python = "3.11"
+python = "3.12.1"
+streamlit = "^1.29.0"
+requests = "^2.31.0"
 
 
 [build-system]
