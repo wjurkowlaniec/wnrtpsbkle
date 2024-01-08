@@ -2,17 +2,36 @@ import streamlit as st
 from urllib.error import URLError
 from io import StringIO
 import requests
+import pandas as pd
 
 DAYS_RANGE = 90
 
 API_URL = "https://api.nbp.pl/api/exchangerates/rates/A/{}/last/90/?format=json"
-currencies = ["EUR/PLN", "USD/PLN", "CHF/PLN"]
+
+currency_list  = ["EUR", "USD", "CHF"]
+currency_select = ["EUR/PLN", "USD/PLN", "CHF/PLN"]
+currency_convert = ["EUR/USD", "CHF/USD"]
+
+def save_currencies(currency_data):
+    for currency in currency_select:
+         data_csv = currency_data[currency].to_csv(index=False)
+         currency_file_name = currency.replace('/', '_')
+         with open(f"data/{currency_file_name}.csv", "w") as f:
+             f.write(data_csv)
+        
+def load_currencies():
+    data = {}
+    for pair in currency_select:
+        pair_filename = pair.replace('/', '_')
+        data[pair] = pd.read_csv(f"data/{pair_filename}.csv")
+    return data
+
 
 
 def refresh_currencies():
     data = {}
-    for pair in currencies:
-        url = API_URL.format(pair[:3])
+    for currency in currency_list:
+        url = API_URL.format(currency[:3])
         try:
             response = requests.get(url)
             response.raise_for_status()
@@ -23,28 +42,32 @@ def refresh_currencies():
         else:
             rates_raw = response.json()["rates"]
             rates = [(rate["mid"], rate["effectiveDate"]) for rate in rates_raw]
+            data[f"{currency}/PLN"] = pd.DataFrame(rates, columns=["Rate","Date"])
             
-            data[pair] = sorted(rates, key=lambda x: x[1])
-            
+    
     return data
 
+try:
+    currencies_data = load_currencies()
+except:
+    currencies_data = refresh_currencies()
+    save_currencies(currencies_data)
 
-currencies_data = refresh_currencies()
-print(currencies_data)
-# currencies_data = 
+    
+# refresh_currencies()
 
 user_currencies = []
 
-select_value = st.selectbox("Choose currency", currencies)
+select_value = st.selectbox("Choose currency", currency_select)
 
 
-column_config = {
-    'Rate': {'width': 150},
-    'Date': {'backgroundColor': '#90ee90'},
-}
+currencies_dataframe = st.dataframe(currencies_data[select_value], hide_index=True)
+# st.dataframe(currencies_dataframe.style.hide(axis="index"))
+# st.dataframe(currencies_dataframe, hide_index=True)
 
-st.dataframe(currencies_data[select_value], column_config=column_config)
-
+if st.button("Refresh data"):
+    refresh_currencies()
+    save_currencies()
 
 
 # "
