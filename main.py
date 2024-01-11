@@ -58,7 +58,7 @@ except:
 
 user_currencies = []
 
-select_value = st.selectbox("Choose currency", currency_select)
+select_value = st.multiselect("Choose currency", currency_select)
 
 
 currencies_dataframe = st.dataframe(currencies_data[select_value], hide_index=True)
